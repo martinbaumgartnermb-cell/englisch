@@ -628,7 +628,7 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
         '</div>';
       document.getElementById("nachher").hidden = false;
       document.getElementById("weissNicht").hidden = true;
-      document.getElementById("nochmal").hidden = ok || !!c.write || !SR;
+      document.getElementById("nochmal").hidden = ok || !!c.write || !SR || ALS_WEBAPP;
       punkteZeigen();
 
       // Richtig → nach kurzer Pause automatisch weiter (wie beim Einmaleins)
@@ -705,7 +705,9 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
     // Das Mikrofon geht bei jeder Sprech-Karte automatisch an und hört weiter zu,
     // bis Rémi etwas gesagt hat. Nur wenn das iPad es blockiert, braucht es einen Tipp aufs Mikrofon.
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let erkenner = null, hoertZu = false, neustarts = 0;
+    let erkenner = null, hoertZu = false, neustarts = 0, letzterFehler = "";
+    // Auf dem Home-Bildschirm (als Web-App) gibt es auf dem iPad keine Spracherkennung
+    const ALS_WEBAPP = window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
 
     function mikroAnzeige(an, text) {
       hoertZu = an;
@@ -721,13 +723,15 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
 
     function zuhoerenStarten(automatisch) {
       const c = aktuelle();
-      if (!SR) {
-        mikroAnzeige(false, "Sag das Wort laut. Dann tippe aufs Mikrofon.");
+      if (!SR || ALS_WEBAPP) {
+        mikroAnzeige(false, ALS_WEBAPP
+          ? "⚠️ Als Home-Bildschirm-App kann das iPad nicht zuhören. Bitte die App in Safari öffnen. Sag das Wort laut und tippe aufs Mikrofon zum Vergleichen."
+          : "Sag das Wort laut. Dann tippe aufs Mikrofon zum Vergleichen.");
         return;
       }
-      if (automatisch) neustarts = 0;
+      if (automatisch) { neustarts = 0; letzterFehler = ""; }
       stoppeZuhoeren();
-      try { speechSynthesis.cancel(); } catch (f) {}
+      try { if (speechSynthesis.speaking) speechSynthesis.cancel(); } catch (f) {}
 
       const e = new SR();
       e.lang = "en-GB"; e.interimResults = false; e.continuous = false; e.maxAlternatives = 5;
@@ -749,9 +753,16 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
       };
       e.onerror = function (ev) {
         if (erkenner !== e) return;
-        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+        letzterFehler = ev.error;
+        const meldung = {
+          "not-allowed": "🔒 Safari darf das Mikrofon nicht benutzen. iPad-Einstellungen → Apps → Safari → Mikrofon → «Erlauben».",
+          "service-not-allowed": "🔒 Die Spracherkennung ist aus. iPad-Einstellungen → Allgemein → Tastatur → «Diktierfunktion» einschalten.",
+          "audio-capture": "🎤 Ich finde kein Mikrofon.",
+          "network": "📶 Für die Spracherkennung braucht es Internet."
+        }[ev.error];
+        if (meldung) {
           erkenner = null;
-          mikroAnzeige(false, "🔒 Das Mikrofon ist noch nicht erlaubt. Tippe aufs Mikrofon und dann auf «Erlauben».");
+          mikroAnzeige(false, meldung + " (Fehler: " + ev.error + ")");
           document.getElementById("selbstPruefen").hidden = false;
         }
       };
@@ -763,7 +774,7 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
           setTimeout(() => { if (zaehler === karteZaehler && !beantwortet) zuhoerenStarten(false); }, 150);
         } else {
           erkenner = null;
-          mikroAnzeige(false, "Tippe aufs Mikrofon und sag das Wort.");
+          mikroAnzeige(false, "Tippe aufs Mikrofon und sag das Wort." + (letzterFehler && letzterFehler !== "no-speech" ? " (Fehler: " + letzterFehler + ")" : ""));
           if (beantwortet) document.getElementById("nachher").hidden = false;
         }
       };
@@ -801,7 +812,7 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
     document.getElementById("mikro").onclick = function () {
       if (beantwortet && document.getElementById("nochmal").hidden) return;
       if (hoertZu) { stoppeZuhoeren(); mikroAnzeige(false, "Tippe aufs Mikrofon und sag das Wort."); return; }
-      if (!SR) {   // ohne Spracherkennung: vorlesen und selbst prüfen
+      if (!SR || ALS_WEBAPP) {   // ohne Spracherkennung: vorlesen und selbst prüfen
         vorlesen(aktuelle().en);
         document.getElementById("hinweis").textContent = "So klingt es richtig. Konntest du es?";
         document.getElementById("selbstPruefen").hidden = false;
