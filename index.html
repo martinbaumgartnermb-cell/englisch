@@ -470,7 +470,7 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
         const juenger = (a.resetZeit || 0) > (b.resetZeit || 0) ? a : b;
         neu.muenzen = juenger.muenzen || 0; neu.richtigInsgesamt = juenger.richtigInsgesamt || 0;
       }
-      const ids = new Set([...Object.keys(a.karten || {}), ...Object.keys(b.karten || {})]);
+      const ids = new Set(Object.keys(a.karten || {}).concat(Object.keys(b.karten || {})));
       for (const id of ids) {
         const x = (a.karten || {})[id], y = (b.karten || {})[id];
         let k = !x ? y : !y ? x : ((y.zeit || 0) > (x.zeit || 0) ? y : x);
@@ -734,56 +734,94 @@ CARDS.push({id:'n100',set:2,num:'100',en:'hundred',say:[['hundred','one hundred'
       try { if (speechSynthesis.speaking) speechSynthesis.cancel(); } catch (f) {}
 
       const e = new SR();
-      e.lang = "en-GB"; e.interimResults = false; e.continuous = false; e.maxAlternatives = 5;
+      // interimResults: schon während Rémi spricht kommen Zwischenergebnisse.
+      // So erkennen wir das Wort sofort – auch auf älteren iPads, wo das Zuhören sonst nie endet.
+      e.lang = "en-GB"; e.interimResults = true; e.continuous = false; e.maxAlternatives = 5;
       const zaehler = karteZaehler;
-      let gehoert = false;
+      let fertig = false, gestartet = false, zuletzt = [];
       erkenner = e;
 
-      e.onresult = function (ev) {
-        if (erkenner !== e || zaehler !== karteZaehler) return;
-        gehoert = true;
+      function aktuellGueltig() { return erkenner === e && zaehler === karteZaehler && !fertig; }
+      function abschliessen(alternativen) {
+        fertig = true; erkenner = null;
+        try { e.abort(); } catch (f) {}
         mikroAnzeige(false);
-        const alternativen = [...ev.results[0]].map(a => a.transcript);
         if (sprachePasst(c, alternativen)) {
           bewerten(true, '<div class="gross">' + LOB[Math.floor(Math.random() * LOB.length)] + '</div><div class="loesung">' + c.en + '</div>');
         } else {
           bewerten(false, '<div class="gross">Fast! Hör gut zu 👂</div><div class="info">Ich habe gehört: «' + (alternativen[0] || "") + '»</div><div class="loesung">' + c.en + '</div><div class="info">Sag es nochmal nach!</div>');
-          setTimeout(() => vorlesen(c.en), 300);
+          setTimeout(function () { vorlesen(c.en); }, 400);
         }
+      }
+
+      e.onstart = function () {
+        gestartet = true;
+        if (aktuellGueltig()) mikroAnzeige(true, "👂 Ich höre zu … sag es auf Englisch!");
+      };
+      e.onresult = function (ev) {
+        if (!aktuellGueltig()) return;
+        const alternativen = [];
+        let endgueltig = false;
+        for (let i = 0; i < ev.results.length; i++) {
+          const r = ev.results[i];
+          if (r.isFinal) endgueltig = true;
+          for (let j = 0; j < r.length; j++) if (r[j] && r[j].transcript) alternativen.push(r[j].transcript);
+        }
+        if (!alternativen.length) return;
+        zuletzt = alternativen;
+        document.getElementById("hinweis").textContent = "👂 … " + alternativen[0];
+        if (sprachePasst(c, alternativen) || endgueltig) abschliessen(alternativen);
       };
       e.onerror = function (ev) {
         if (erkenner !== e) return;
         letzterFehler = ev.error;
         const meldung = {
-          "not-allowed": "🔒 Safari darf das Mikrofon nicht benutzen. iPad-Einstellungen → Apps → Safari → Mikrofon → «Erlauben».",
+          "not-allowed": "🔒 Safari darf das Mikrofon nicht benutzen. iPad-Einstellungen → Safari → Mikrofon → «Erlauben».",
           "service-not-allowed": "🔒 Die Spracherkennung ist aus. iPad-Einstellungen → Allgemein → Tastatur → «Diktierfunktion» einschalten.",
           "audio-capture": "🎤 Ich finde kein Mikrofon.",
           "network": "📶 Für die Spracherkennung braucht es Internet."
         }[ev.error];
         if (meldung) {
-          erkenner = null;
+          fertig = true; erkenner = null;
           mikroAnzeige(false, meldung + " (Fehler: " + ev.error + ")");
           document.getElementById("selbstPruefen").hidden = false;
         }
       };
       e.onend = function () {
-        if (erkenner !== e || zaehler !== karteZaehler || gehoert) return;
-        // Nichts gehört → einfach weiter zuhören (ein paar Mal)
-        if (!beantwortet && neustarts < 6) {
+        if (!aktuellGueltig()) return;
+        if (zuletzt.length) { abschliessen(zuletzt); return; }   // es gab etwas Gehörtes
+        // Nichts gehört → weiter zuhören (ein paar Mal)
+        if (!beantwortet && neustarts < 5) {
           neustarts++;
-          setTimeout(() => { if (zaehler === karteZaehler && !beantwortet) zuhoerenStarten(false); }, 150);
+          erkenner = null;
+          setTimeout(function () { if (zaehler === karteZaehler && !beantwortet) zuhoerenStarten(false); }, 300);
         } else {
           erkenner = null;
           mikroAnzeige(false, "Tippe aufs Mikrofon und sag das Wort." + (letzterFehler && letzterFehler !== "no-speech" ? " (Fehler: " + letzterFehler + ")" : ""));
-          if (beantwortet) document.getElementById("nachher").hidden = false;
         }
       };
+
+      // Sicherheitsnetz: nach 7 Sekunden auswerten, was gehört wurde
+      setTimeout(function () {
+        if (!aktuellGueltig()) return;
+        if (zuletzt.length) abschliessen(zuletzt);
+        else { try { e.stop(); } catch (f) {} }
+      }, 7000);
+      // Startet das Mikrofon nicht (z. B. ohne Tippen), braucht es einen Tipp aufs Mikrofon
+      setTimeout(function () {
+        if (aktuellGueltig() && !gestartet) {
+          erkenner = null; fertig = true;
+          try { e.abort(); } catch (f) {}
+          mikroAnzeige(false, "👆 Tippe aufs Mikrofon und sag das Wort.");
+        }
+      }, 2500);
+
       try {
         e.start();
-        mikroAnzeige(true, "👂 Ich höre zu … sag es auf Englisch!");
+        mikroAnzeige(true, "⏳ Mikrofon startet …");
       } catch (f) {
-        erkenner = null;
-        mikroAnzeige(false, "Tippe aufs Mikrofon und sag das Wort.");
+        erkenner = null; fertig = true;
+        mikroAnzeige(false, "👆 Tippe aufs Mikrofon und sag das Wort.");
       }
     }
 
