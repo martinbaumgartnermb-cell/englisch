@@ -25,16 +25,12 @@
     }
     button { font-family: inherit; cursor: pointer; touch-action: manipulation; }
 
-    /* Kopfzeile mit Titel und Münzen */
+    /* Kopfzeile mit Titel und Sammelalbum */
     .kopf {
       display: flex; justify-content: space-between; align-items: center;
       padding: 14px 16px; max-width: 820px; margin: 0 auto;
     }
     h1 { margin: 0; font-size: 26px; color: #e85d04; }
-    .muenzen {
-      font-size: 24px; background: white; padding: 6px 16px; border-radius: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    }
 
     /* ---------- Startseite ---------- */
     #start { padding: 0 16px 30px; max-width: 820px; margin: 0 auto; }
@@ -158,18 +154,58 @@
     .sterne { font-size: 70px; margin: 10px 0; }
     .ergebnis { font-size: 40px; font-weight: bold; color: #e85d04; }
 
-    /* Münz-Belohnung */
-    #muenzePlus {
-      position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-      font-size: 90px; pointer-events: none; display: none;
+    /* ---------- Sammelalbum (gleich in beiden Apps) ---------- */
+    .album-knopf {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: white; border: none; border-radius: 20px; padding: 6px 14px 7px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12); color: #333;
     }
-    #muenzePlus.zeigen { display: block; animation: hupf 1.3s ease-out; }
-    @keyframes hupf {
-      0% { transform: translate(-50%,-50%) scale(.2); opacity: 0; }
-      30% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
-      70% { transform: translate(-50%,-80%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%,-160%) scale(.6); opacity: 0; }
+    .album-knopf:active { transform: translateY(2px); }
+    .album-knopf.landet { animation: landen .5s ease-out; }
+    @keyframes landen { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+    .album-zahl { font-size: 22px; font-weight: bold; line-height: 1; }
+    .album-punkte { display: flex; gap: 4px; }
+    .album-punkte i { width: 10px; height: 10px; border-radius: 50%; background: #eee; display: block; transition: background .3s; }
+    .album-punkte i.voll { background: #ffb703; }
+
+    .serie { display: inline-block; font-size: 18px; font-weight: bold; color: #c44900; background: #fff1e0;
+             border-radius: 16px; padding: 4px 14px; margin-top: 8px; }
+
+    /* Der neue Sticker poppt auf und fliegt dann ins Album oben rechts */
+    #stickerPlus {
+      position: fixed; top: 42%; left: 50%; z-index: 50; pointer-events: none; display: none;
+      background: white; border-radius: 28px; padding: 18px 30px 16px; min-width: 230px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22); border: 5px solid #ffd166;
     }
+    #stickerPlus.gold { border-color: #f5b700; background: linear-gradient(#fffbe6, #fff1b8); }
+    #stickerPlus .s-titel { font-size: 22px; font-weight: bold; color: #e85d04; }
+    #stickerPlus .s-bild { font-size: 110px; line-height: 1.15; }
+    #stickerPlus.gold .s-bild { filter: drop-shadow(0 0 14px #ffd000); }
+    #stickerPlus .s-name { font-size: 26px; font-weight: bold; }
+    #stickerPlus .s-info { font-size: 16px; color: #777; margin-top: 2px; }
+    #stickerPlus.zeigen { display: block; animation: stickerFlug 2.4s ease-in-out forwards; }
+    @keyframes stickerFlug {
+      0%   { transform: translate(-50%, -50%) scale(.2) rotate(-12deg); opacity: 0; }
+      14%  { transform: translate(-50%, -50%) scale(1.12) rotate(4deg); opacity: 1; }
+      22%  { transform: translate(-50%, -50%) scale(1) rotate(0); }
+      72%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(calc(-50% + 36vw), calc(-50% - 38vh)) scale(.12); opacity: .2; }
+    }
+
+    /* Album-Ansicht */
+    #album { border: none; border-radius: 22px; padding: 18px; width: 94%; max-width: 640px; max-height: 88vh; text-align: center; }
+    #album::backdrop { background: rgba(0,0,0,.35); }
+    #album h3 { margin: 0 0 4px; color: #e85d04; font-size: 26px; }
+    #album .a-stand { font-size: 17px; color: #666; margin-bottom: 8px; }
+    #album .a-seite { font-size: 18px; font-weight: bold; text-align: left; margin: 14px 0 6px; }
+    #album .a-raster { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    #album .a-sticker { background: #f6f6f6; border-radius: 14px; padding: 6px 2px; font-size: 13px; color: #555; }
+    #album .a-sticker b { display: block; font-size: 38px; line-height: 1.2; font-weight: normal; }
+    #album .a-sticker.hat { background: #fff6d6; color: #333; }
+    #album .a-sticker.gold { background: linear-gradient(#fff6c2, #ffe27a); box-shadow: 0 0 0 3px #f5b700 inset; }
+    #album .a-sticker.fehlt b { filter: grayscale(1) brightness(1.6); opacity: .25; }
+    #album .a-zu { margin-top: 16px; font-size: 22px; font-weight: bold; border: none; border-radius: 18px; padding: 12px 34px;
+                   background: #06d6a0; color: white; box-shadow: 0 5px 0 #04a57b; font-family: inherit; }
 
     /* Einstellungen */
     dialog { border: none; border-radius: 22px; padding: 22px; width: 92%; max-width: 460px; font-size: 19px; text-align: left; }
@@ -185,7 +221,10 @@
   <!-- ================= INHALT (HTML) ================= -->
   <div class="kopf">
     <h1>🇬🇧 Englisch</h1>
-    <div class="muenzen">🪙 <span id="muenzZahl">0</span></div>
+    <button class="album-knopf" id="albumKnopf" aria-label="Sammelalbum">
+      <span class="album-zahl">📒 <span id="albumZahl">0</span></span>
+      <span class="album-punkte" id="albumPunkte"></span>
+    </button>
   </div>
 
   <!-- Startseite -->
@@ -198,6 +237,7 @@
         <input type="file" id="fotoWahl" accept="image/*" style="display:none">
       </label>
       <h2>Hello <span id="name"></span>! <span class="winken">👋</span></h2>
+      <div class="serie" id="serie" hidden></div>
     </div>
 
     <!-- Farbiges Einstiegsbild -->
@@ -333,7 +373,8 @@
     <button class="zurueck" id="zumStart">← Start</button>
   </div>
 
-  <div id="muenzePlus">🪙</div>
+  <div id="stickerPlus"></div>
+  <dialog id="album"></dialog>
 
   <!-- Einstellungen -->
   <dialog id="einstellungen">
@@ -358,7 +399,6 @@
     // ---------- Einstellungen ----------
     const NAME = "Rémi";
     const GEKONNT_AB = 2;          // so oft hintereinander richtig = "kann ich"
-    const MUENZE_ALLE = 5;         // alle 5 richtigen Antworten gibt es eine Münze
     const SPEICHER_NAME = "englisch-daten";
     const FOTO_SPEICHER = "einmaleins-foto";   // gleiches Foto wie im Einmaleins
 
@@ -463,7 +503,7 @@ CARDS.push(
     function schreiben(name, wert) { try { localStorage.setItem(name, JSON.stringify(wert)); } catch (f) {} }
 
     function laden() {
-      return Object.assign({ karten: {}, muenzen: 0, richtigInsgesamt: 0, resetZeit: 0 }, lesen(SPEICHER_NAME) || {});
+      return Object.assign({ karten: {}, richtigInsgesamt: 0, resetZeit: 0 }, lesen(SPEICHER_NAME) || {});
     }
     function speichern() {
       schreiben(SPEICHER_NAME, daten);
@@ -491,11 +531,10 @@ CARDS.push(
     function zusammenfuehren(a, b) {
       const reset = Math.max(a.resetZeit || 0, b.resetZeit || 0);
       const neu = { karten: {}, resetZeit: reset,
-                    muenzen: Math.max(a.muenzen || 0, b.muenzen || 0),
                     richtigInsgesamt: Math.max(a.richtigInsgesamt || 0, b.richtigInsgesamt || 0) };
       if ((a.resetZeit || 0) !== (b.resetZeit || 0)) {     // nach einem Zurücksetzen zählt nur der neue Stand
         const juenger = (a.resetZeit || 0) > (b.resetZeit || 0) ? a : b;
-        neu.muenzen = juenger.muenzen || 0; neu.richtigInsgesamt = juenger.richtigInsgesamt || 0;
+        neu.richtigInsgesamt = juenger.richtigInsgesamt || 0;
       }
       const ids = new Set(Object.keys(a.karten || {}).concat(Object.keys(b.karten || {})));
       for (const id of ids) {
@@ -548,7 +587,7 @@ CARDS.push(
           feld.appendChild(s);
         }
       }
-      muenzenAnzeigen();
+      albumAnzeigen();
     }
 
     // ================= DIE SCHLAUE AUSWAHL =================
@@ -582,7 +621,7 @@ CARDS.push(
 
     // ================= SPIEL =================
     let runde = [], nr = 0, ergebnisse = [], wiederholen = [], inWiederholung = false;
-    let beantwortet = false, vorher = null, karteZaehler = 0;
+    let beantwortet = false, vorher = null, karteZaehler = 0, stickerJetzt = false;
 
     function starteRunde() {
       runde = waehleRunde(); nr = 0; ergebnisse = []; wiederholen = []; inWiederholung = false;
@@ -641,12 +680,11 @@ CARDS.push(
         if (!inWiederholung) {
           const a = info(c.id);
           vorher = Object.assign({}, a);
-          if (ok) { a.richtig++; a.serie++; daten.richtigInsgesamt++; if (daten.richtigInsgesamt % MUENZE_ALLE === 0) { daten.muenzen++; muenzeFeiern(); } }
+          if (ok) { a.richtig++; a.serie++; daten.richtigInsgesamt++; stickerJetzt = albumRichtig(); }
           else { a.falsch++; a.serie = 0; wiederholen.push(c); }
           a.zeit = Date.now();
           ergebnisse[nr] = ok;
           speichern();
-          muenzenAnzeigen();
         }
       }
       const box = document.getElementById("rueckmeldung");
@@ -658,10 +696,12 @@ CARDS.push(
       document.getElementById("nochmal").hidden = ok || !!c.write || !SR || ALS_WEBAPP;
       punkteZeigen();
 
-      // Richtig → nach kurzer Pause automatisch weiter (wie beim Einmaleins)
+      // Richtig → nach kurzer Pause automatisch weiter (wie beim Einmaleins).
+      // Gab es gerade einen Sticker, etwas länger warten, damit Rémi ihn sieht.
       if (ok) {
-        const zaehler = karteZaehler;
-        setTimeout(() => { if (zaehler === karteZaehler && document.getElementById("spiel").style.display === "block") weiter(); }, 1600);
+        const zaehler = karteZaehler, pause = stickerJetzt ? 2600 : 1600;
+        stickerJetzt = false;
+        setTimeout(() => { if (zaehler === karteZaehler && document.getElementById("spiel").style.display === "block") weiter(); }, pause);
       }
     }
 
@@ -671,7 +711,7 @@ CARDS.push(
       if (vorher && !inWiederholung) {
         const a = info(c.id);
         Object.assign(a, vorher);
-        a.richtig++; a.serie++; a.zeit = Date.now(); daten.richtigInsgesamt++;
+        a.richtig++; a.serie++; a.zeit = Date.now(); daten.richtigInsgesamt++; stickerJetzt = albumRichtig();
         ergebnisse[nr] = true;
         wiederholen = wiederholen.filter(k => k !== c);
         speichern();
@@ -1042,11 +1082,6 @@ CARDS.push(
     document.getElementById("zumStart").onclick = zeigeStart;
     document.getElementById("zurueck").onclick = zeigeStart;
 
-    function muenzenAnzeigen() { document.getElementById("muenzZahl").textContent = daten.muenzen; }
-    function muenzeFeiern() {
-      const m = document.getElementById("muenzePlus");
-      m.classList.remove("zeigen"); void m.offsetWidth; m.classList.add("zeigen");
-    }
 
     // ---------- Einstellungen ----------
     function syncTextZeigen() { document.getElementById("syncText").textContent = "Geräte-Abgleich: " + syncZustand; }
@@ -1063,8 +1098,8 @@ CARDS.push(
     };
     document.getElementById("syncKnopf").onclick = function () { syncZustand = "⏳ Gleiche ab …"; syncTextZeigen(); abgleichen(); };
     document.getElementById("zuruecksetzen").onclick = function () {
-      if (confirm("Wirklich den ganzen Fortschritt und alle Münzen löschen? (Auf allen Geräten)")) {
-        daten = { karten: {}, muenzen: 0, richtigInsgesamt: 0, resetZeit: Date.now() };
+      if (confirm("Wirklich den ganzen Fortschritt löschen? (Auf allen Geräten. Die Sticker im Album bleiben.)")) {
+        daten = { karten: {}, richtigInsgesamt: 0, resetZeit: Date.now() };
         speichern();
         document.getElementById("einstellungen").close();
         zeigeStart();
@@ -1099,6 +1134,149 @@ CARDS.push(
       };
       leser.readAsDataURL(datei);
     };
+
+    // ================= SAMMELALBUM =================
+    // Alle 5 richtigen Antworten gibt es einen Sticker fürs Album.
+    // Das Album gehört zu beiden Apps (Einmaleins und Englisch): Sie teilen sich
+    // den Speicher im Browser, so wie das Foto. Richtige Antworten aus beiden Apps zählen.
+    const ALBUM_SPEICHER = "sammelalbum";
+    const STICKER_ALLE = 5;          // alle 5 richtigen Antworten ein Sticker
+    const GOLD_CHANCE = 0.1;         // ab und zu ist ein Sticker golden (1 von 10)
+
+    const STICKER_SEITEN = [
+      { titel: "🌲 Im Wald", sticker: [["🦊","Fuchs"],["🦔","Igel"],["🦉","Eule"],["🐿️","Eichhörnchen"],["🦌","Hirsch"],
+                                       ["🐻","Bär"],["🐺","Wolf"],["🦡","Dachs"],["🦫","Biber"],["🍄","Pilz"]] },
+      { titel: "🌊 Im Meer", sticker: [["🐬","Delfin"],["🦈","Hai"],["🐙","Krake"],["🐠","Fisch"],["🐢","Schildkröte"],
+                                       ["🦀","Krebs"],["🐳","Wal"],["🦭","Robbe"],["🐡","Kugelfisch"],["🦑","Tintenfisch"]] },
+      { titel: "🦖 Dinos & Drachen", sticker: [["🦖","T-Rex"],["🦕","Langhals"],["🐉","Drache"],["🐲","Drachenkopf"],["🦎","Echse"],
+                                       ["🐊","Krokodil"],["🥚","Drachenei"],["🌋","Vulkan"],["🦴","Knochen"],["🪨","Fels"]] },
+      { titel: "🌍 Wilde Tiere", sticker: [["🦁","Löwe"],["🐘","Elefant"],["🦒","Giraffe"],["🦓","Zebra"],["🐒","Affe"],
+                                       ["🦜","Papagei"],["🐼","Panda"],["🦘","Känguru"],["🐧","Pinguin"],["🦩","Flamingo"]] },
+      { titel: "🚀 Im Weltall", sticker: [["🚀","Rakete"],["🛸","Ufo"],["🌍","Erde"],["🌙","Mond"],["⭐","Stern"],
+                                       ["☄️","Komet"],["🪐","Saturn"],["👽","Alien"],["🛰️","Satellit"],["🌌","Milchstrasse"]] },
+      { titel: "⚽ Sport", sticker: [["⚽","Fussball"],["🏀","Basketball"],["🎾","Tennis"],["🏒","Eishockey"],["⛷️","Skifahrer"],
+                                       ["🚴","Velo"],["🛹","Skateboard"],["🏆","Pokal"],["🥇","Goldmedaille"],["🎯","Volltreffer"]] },
+      { titel: "🚂 Fahrzeuge", sticker: [["🚂","Lokomotive"],["🚁","Helikopter"],["🏎️","Rennauto"],["🚒","Feuerwehr"],["🚜","Traktor"],
+                                       ["✈️","Flugzeug"],["⛵","Segelboot"],["🚠","Gondel"],["🏍️","Motorrad"],["🚓","Polizei"]] }
+    ];
+    const ALLE_STICKER = [];
+    STICKER_SEITEN.forEach(function (s) { s.sticker.forEach(function (x) { ALLE_STICKER.push({ emoji: x[0], name: x[1] }); }); });
+
+    function albumLaden() {
+      let a = null;
+      try { const t = localStorage.getItem(ALBUM_SPEICHER); if (t) a = JSON.parse(t); } catch (f) {}
+      return Object.assign({ zaehler: 0, sticker: {}, serie: 0, letzterTag: "", umgetauscht: {} }, a || {});
+    }
+    function albumSpeichern(a) { try { localStorage.setItem(ALBUM_SPEICHER, JSON.stringify(a)); } catch (f) {} }
+
+    function tagText(d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+    function gesternText() { const d = new Date(); d.setDate(d.getDate() - 1); return tagText(d); }
+    function zufall(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
+    function anzahlSticker(a) { return ALLE_STICKER.filter(function (s) { return a.sticker[s.emoji]; }).length; }
+
+    // Einen Sticker ziehen: zuerst nur solche, die noch fehlen.
+    // Ist das Album voll, werden die Sticker nach und nach golden.
+    function stickerZiehen(a) {
+      const fehlen = ALLE_STICKER.filter(function (s) { return !a.sticker[s.emoji]; });
+      const nichtGold = ALLE_STICKER.filter(function (s) { return a.sticker[s.emoji] && !a.sticker[s.emoji].gold; });
+      let s, gold;
+      if (fehlen.length) { s = zufall(fehlen); gold = Math.random() < GOLD_CHANCE; }
+      else if (nichtGold.length) { s = zufall(nichtGold); gold = true; }
+      else { return null; }                       // alles gesammelt und alles golden 🏆
+      a.sticker[s.emoji] = { gold: gold, zeit: Date.now() };
+      return { emoji: s.emoji, name: s.name, gold: gold };
+    }
+
+    // Wird bei jeder richtigen Antwort aufgerufen.
+    // Gibt true zurück, wenn es gerade einen Sticker gab (dann etwas länger warten).
+    function albumRichtig() {
+      const a = albumLaden();                     // frisch lesen: die andere App hat vielleicht auch gezählt
+      const heute = tagText(new Date());
+      if (a.letzterTag !== heute) {
+        a.serie = a.letzterTag === gesternText() ? a.serie + 1 : 1;
+        a.letzterTag = heute;
+      }
+      a.zaehler++;
+      let neu = null;
+      if (a.zaehler >= STICKER_ALLE) {
+        a.zaehler = 0;
+        neu = stickerZiehen(a);
+        if (!neu) neu = { emoji: "🏆", name: "Album komplett!", gold: true, fertig: true };
+      }
+      albumSpeichern(a);
+      albumAnzeigen(a);
+      if (neu) stickerFeiern(neu, a);
+      return !!neu;
+    }
+
+    // Alte Münzen einmalig in Sticker umtauschen, damit nichts verloren geht
+    function muenzenUmtauschen(app, muenzen) {
+      const a = albumLaden();
+      if (a.umgetauscht[app]) return;
+      for (let i = 0; i < (muenzen || 0); i++) { if (!stickerZiehen(a)) break; }
+      a.umgetauscht[app] = true;
+      albumSpeichern(a);
+    }
+
+    function albumAnzeigen(a) {
+      a = a || albumLaden();
+      document.getElementById("albumZahl").textContent = anzahlSticker(a);
+      let punkte = "";
+      for (let i = 0; i < STICKER_ALLE; i++) punkte += '<i class="' + (i < a.zaehler ? "voll" : "") + '"></i>';
+      document.getElementById("albumPunkte").innerHTML = punkte;
+      // Tages-Serie: nur zeigen, wenn heute oder gestern geübt wurde
+      const serie = (a.letzterTag === tagText(new Date()) || a.letzterTag === gesternText()) ? a.serie : 0;
+      const feld = document.getElementById("serie");
+      feld.hidden = serie < 2;
+      feld.textContent = "🔥 " + serie + " Tage hintereinander geübt!";
+    }
+
+    function stickerFeiern(s, a) {
+      const box = document.getElementById("stickerPlus");
+      box.className = s.gold ? "gold" : "";
+      box.innerHTML =
+        '<div class="s-titel">' + (s.fertig ? "Alles gesammelt!" : s.gold ? "✨ Goldener Sticker! ✨" : "🎁 Neuer Sticker!") + '</div>' +
+        '<div class="s-bild">' + s.emoji + '</div>' +
+        '<div class="s-name">' + s.name + '</div>' +
+        '<div class="s-info">📒 ' + anzahlSticker(a) + ' von ' + ALLE_STICKER.length + '</div>';
+      void box.offsetWidth;                        // kleiner Trick, damit die Animation neu startet
+      box.classList.add("zeigen");
+      const knopf = document.getElementById("albumKnopf");
+      setTimeout(function () {
+        knopf.classList.remove("landet"); void knopf.offsetWidth; knopf.classList.add("landet");
+      }, 2300);
+    }
+
+    function albumOeffnen() {
+      const a = albumLaden();
+      let html = '<h3>📒 Mein Sammelalbum</h3><div class="a-stand">' + anzahlSticker(a) + ' von ' + ALLE_STICKER.length +
+                 ' Stickern · alle ' + STICKER_ALLE + ' richtigen Antworten gibt es einen neuen</div>';
+      for (const seite of STICKER_SEITEN) {
+        html += '<div class="a-seite">' + seite.titel + '</div><div class="a-raster">';
+        for (const x of seite.sticker) {
+          const hat = a.sticker[x[0]];
+          html += '<div class="a-sticker ' + (hat ? (hat.gold ? "hat gold" : "hat") : "fehlt") + '"><b>' + x[0] + '</b>' + (hat ? x[1] : "?") + '</div>';
+        }
+        html += '</div>';
+      }
+      html += '<button class="a-zu" id="albumZu">Fertig</button>';
+      const d = document.getElementById("album");
+      d.innerHTML = html;
+      document.getElementById("albumZu").onclick = function () { d.close(); };
+      d.showModal();
+      d.scrollTop = 0;                             // oben beginnen, nicht beim Fertig-Knopf
+      if (document.activeElement) document.activeElement.blur();
+    }
+
+    document.getElementById("albumKnopf").onclick = albumOeffnen;
+    // Wenn Rémi zwischen den Apps wechselt, den Stand neu anzeigen
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) albumAnzeigen(); });
+    window.addEventListener("storage", function (e) { if (e.key === ALBUM_SPEICHER) albumAnzeigen(); });
+
+    // Münzen von früher einmalig in Sticker umtauschen
+    if (daten.muenzen) muenzenUmtauschen("englisch", daten.muenzen);
+    delete daten.muenzen;
+    schreiben(SPEICHER_NAME, daten);
 
     fotoAnzeigen();
     zeigeStart();
